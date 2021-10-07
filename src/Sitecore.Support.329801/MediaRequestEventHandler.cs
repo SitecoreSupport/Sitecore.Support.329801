@@ -66,22 +66,33 @@
                 {
                     StartTracking();
 
-                    Condition.Requires(Tracker.Current, nameof(Tracker)).IsNotNull("Tracker.Current is not initialized");
-                    Condition.Requires(Tracker.Current.Session, nameof(Tracker)).IsNotNull("Tracker.Current.Session is not initialized");
-                    Condition.Requires(Tracker.Current.Session.Interaction, nameof(Tracker)).IsNotNull("Tracker.Current.Session.Interaction is not initialized");
-                    Condition.Requires(Tracker.Current.Session.Interaction.CurrentPage, nameof(Tracker)).IsNotNull("Tracker.Current.Session.Interaction.CurrentPage is not initialized");
+                    var currentTracker = Tracker.Current;
+                    Condition.Requires(currentTracker, nameof(Tracker)).IsNotNull("Tracker.Current is not initialized");
+                    var session = currentTracker.Session;
+                    Condition.Requires(session, nameof(Tracker)).IsNotNull("Tracker.Current.Session is not initialized");
 
-                    var previousPage = Tracker.Current.Session.Interaction.PreviousPage;
-                    if (previousPage != null)
+                    var interaction = session.Interaction;
+
+                    if (interaction != null)
                     {
-                        if (Tracker.Current.Session.Interaction.CurrentPage.PageEvents.Any())
+                        var currentPage = interaction.CurrentPage;
+
+                        if (currentPage != null)
                         {
-                            var pageEvents = Tracker.Current.Session.Interaction.CurrentPage.PageEvents.Select(i => new PageEventData(i));
+                            var previousPage = interaction.PreviousPage;
 
-                            previousPage.RegisterEvents(pageEvents);
+                            if (previousPage != null)
+                            {
+                                if (currentPage.PageEvents.Any())
+                                {
+                                    var pageEvents = currentPage.PageEvents.Select(i => new PageEventData(i));
+
+                                    previousPage.RegisterEvents(pageEvents);
+                                }
+
+                                currentPage.Cancel();
+                            }
                         }
-
-                        Tracker.Current.Session.Interaction.CurrentPage.Cancel();
                     }
                 }
                 catch (Exception ex)
